@@ -311,7 +311,7 @@ syn region pandocCodeBlockInsideIndent   start=/\(\(\d\|\a\|*\).*\n\)\@<!\(^\(\s
 " Links: {{{2
 
 " Base: {{{3
-syn region pandocReferenceLabel matchgroup=pandocOperator start=/!\{,1}\\\@<!\^\@<!\[/ skip=/\(\\\@<!\]\]\@=\|`[^`]*`\)/ end=/\\\@<!\]/ keepend display
+syn region pandocReferenceLabel matchgroup=pandocOperator start=/!\{,1}\\\@<!\^\@<!\[/ skip=/\(\\\@<!\]\]\@=\|`[^`]*`\)/ end=/\\\@<!\]/ keepend display contains=pandocNoFormatted
 if g:pandoc#syntax#conceal#urls == 1
     syn region pandocReferenceURL matchgroup=pandocOperator start=/\]\@1<=(/ end=/)/ keepend conceal
 else
@@ -401,7 +401,7 @@ call s:WithConceal('strikeout', 'syn region pandocStrikeout matchgroup=pandocOpe
 
 " Headers: {{{2
 syn match pandocAtxHeader /\(\%^\|<.\+>.*\n\|^\s*\n\)\@<=#\{1,6}.*\n/ contains=pandocEmphasis,pandocStrong,pandocNoFormatted,pandocLaTeXInlineMath,pandocEscapedDollar,@Spell,pandocAmpersandEscape,pandocReferenceLabel,pandocReferenceURL display
-syn match pandocAtxHeaderMark /\(^#\{1,6}\|\\\@<!#\+\(\s*.*$\)\@=\)/ contained containedin=pandocAtxHeader
+syn match pandocAtxHeaderMark /\(^#\{1,6}\|\s\zs\\\@<!#\+\s*$\)/ contained containedin=pandocAtxHeader
 call s:WithConceal('atx', 'syn match pandocAtxStart /#/ contained containedin=pandocAtxHeaderMark', 'conceal cchar='.s:cchars['atx'])
 syn match pandocSetexHeader /^.\+\n[=]\+$/ contains=pandocEmphasis,pandocStrong,pandocNoFormatted,pandocLaTeXInlineMath,pandocEscapedDollar,@Spell,pandocAmpersandEscape
 syn match pandocSetexHeader /^.\+\n[-]\+$/ contains=pandocEmphasis,pandocStrong,pandocNoFormatted,pandocLaTeXInlineMath,pandocEscapedDollar,@Spell,pandocAmpersandEscape
