@@ -294,8 +294,8 @@ syn match pandocTitleBlockTitle /\%^%.*\n/ contained containedin=pandocTitleBloc
 " }}}2
 
 " Blockquotes: {{{2
-" Lazy (unmarked) continuation lines remain in the quote until an empty line.
-syn region pandocBlockQuote start=/^\s\{,3}>/ end=/^$/ contains=@Spell,pandocEmphasis,pandocStrong,pandocPCite,pandocSuperscript,pandocSubscript,pandocStrikeout,pandocUListItem,pandocNoFormatted,pandocAmpersandEscape,pandocLaTeXInlineMath,pandocEscapedDollar,pandocLaTeXCommand,pandocLaTeXMathBlock,pandocLaTeXRegion
+" Lazy (unmarked) continuation lines remain in the quote until a blank line.
+syn region pandocBlockQuote start=/^\s\{,3}>/ end=/^\s*$/ contains=@Spell,pandocEmphasis,pandocStrong,pandocPCite,pandocSuperscript,pandocSubscript,pandocStrikeout,pandocUListItem,pandocNoFormatted,pandocAmpersandEscape,pandocLaTeXInlineMath,pandocEscapedDollar,pandocLaTeXCommand,pandocLaTeXMathBlock,pandocLaTeXRegion
 syn match pandocBlockQuoteMark /\_^\s\{,3}>/ contained containedin=pandocEmphasis,pandocStrong,pandocPCite,pandocSuperscript,pandocSubscript,pandocStrikeout,pandocUListItem,pandocNoFormatted
 " }}}2
 
