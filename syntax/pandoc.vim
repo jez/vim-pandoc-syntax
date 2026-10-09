@@ -453,6 +453,7 @@ syn region pandocDelimitedCodeBlock start=/^\z(\%(>\s\)\?\)\z(\([ ]\+\|\t\)\=\~\
 syn region pandocDelimitedCodeBlock start=/^\z(\%(>\s\)\?\)\z(\([ ]\+\|\t\)\=`\{3,}`*\)/ end=/^\%(\z1\)\?\z2`*\s*$/ skipnl contains=pandocDelimitedCodeBlockStart,pandocDelimitedCodeBlockEnd keepend containedin=pandocBlockQuote
 call s:WithConceal('codeblock_start', 'syn match pandocDelimitedCodeBlockStart /\(\(\_^\n\_^\|\%^\)\(>\s\)\?\( \+\|\t\)\=\)\@<=\(\~\{3,}\~*\|`\{3,}`*\)/ contained containedin=pandocDelimitedCodeBlock nextgroup=pandocDelimitedCodeBlockLanguage', 'conceal cchar='.s:cchars['codelang'])
 syn match pandocDelimitedCodeBlockLanguage /\(\s\?\)\@<=.\+\(\_$\)\@=/ contained
+call s:WithConceal('codeblock_start', 'syn match pandocDelimitedCodeBlockStart /\(^>\s\)\@2<=\(`\{3,}`*\|\~\{3,}\~*\)\ze\s*\S/ contained nextgroup=pandocDelimitedCodeBlockLanguage', 'conceal cchar='.s:cchars['codelang'])
 call s:WithConceal('codeblock_delim', 'syn match pandocDelimitedCodeBlockEnd /\(`\{3,}`*\|\~\{3,}\~*\)\(\_$\n\(>\s\)\?\_$\)\@=/ contained containedin=pandocDelimitedCodeBlock', 'conceal cchar='.s:cchars['codeend'])
 syn match pandocBlockQuoteinDelimitedCodeBlock '^>' contained containedin=pandocDelimitedCodeBlock
 syn match pandocCodePre /<pre>.\{-}<\/pre>/ skipnl
@@ -477,6 +478,7 @@ endif
 " with the number of quoted lines remaining in the block.
 syn match pandocBlockQuoteInEmbeddedCode /\%#=1^>\%([ \t]*\%(`\{3,}\|\~\{3,}\)\)\@!\ze\%([^\n]*\n>\)\{-}[ \t]*\%(`\{3,}\|\~\{3,}\)[ \t]*$/ contained containedin=.*
 
+call s:WithConceal('codeblock_delim', 'syn match pandocDelimitedCodeBlockEnd /\(^>\s\)\@2<=\(`\{3,}`*\|\~\{3,}\~*\)[ \t]*$/ contained containedin=pandocDelimitedCodeBlock', 'conceal cchar='.s:cchars['codeend'])
 " }}}2
 
 " Abbreviations: {{{2
