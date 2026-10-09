@@ -169,16 +169,16 @@ function! EnableEmbedsforCodeblocksWithLang(entry)
         let s:langsyntaxfile = matchstr(a:entry, '[^=]*$')
         unlet! b:current_syntax
         exe 'syn include @'.toupper(s:langname).' syntax/'.s:langsyntaxfile.'.vim'
-        " We might have just turned off spellchecking by including the file,
-        " so we turn it back on here.
+        " Imported syntax can disable spelling; Pandoc enables it at top level.
         exe 'syntax spell toplevel'
-        exe 'syn region pandocDelimitedCodeBlock_' . s:langname . ' start=/\(\_^\( \+\|\t\)\=\(`\{3,}`*\|\~\{3,}\~*\)\s*\%({[^.]*[.=]\)\=' . s:langname . '\>.*\n\)\@<=\_^/' .
-                    \' end=/\_$\n\(\( \+\|\t\)\=\(`\{3,}`*\|\~\{3,}\~*\)\_$\n\_$\)\@=/ contained containedin=pandocDelimitedCodeBlock' .
-                    \' contains=@' . toupper(s:langname)
-        exe 'syn region pandocDelimitedCodeBlockinBlockQuote_' . s:langname . ' start=/>\s\(`\{3,}`*\|\~\{3,}\~*\)\s*\%({[^.]*\.\)\=' . s:langname . '\>/' .
-                    \ ' end=/\(`\{3,}`*\|\~\{3,}\~*\)/ contained containedin=pandocDelimitedCodeBlock' .
-                    \' contains=@' . toupper(s:langname) .
-                    \',pandocDelimitedCodeBlockStart,pandocDelimitedCodeBlockEnd,pandodDelimitedCodeblockLang,pandocBlockQuoteinDelimitedCodeBlock'
+        " Both quoted and unquoted embeds start after the opening line, leaving
+        " delimiters and language labels to the ordinary Pandoc syntax rules.
+        " The outer codeblock's keepend bounds the embed at the matching fence.
+        " Quote prefixes remain in the language syntax input: anchored rules and
+        " multiline strings/comments may misbehave. Prefix coloring is cosmetic.
+        exe 'syn region pandocDelimitedCodeBlock_' . s:langname . ' start=/\%(^\|^>\s\)\@2<=\(\_^\%(>\s\)\?\( \+\|\t\)\=\(`\{3,}`*\|\~\{3,}\~*\)\s*\%({[^.]*[.=]\)\=' . s:langname . '\>.*\n\%(>\s\)\?\)\@<=/' .
+                    \' end=/\%$/ contained containedin=pandocDelimitedCodeBlock' .
+                    \' contains=@' . toupper(s:langname) . ',pandocDelimitedCodeBlockEnd,pandocBlockQuoteinDelimitedCodeBlock'
     catch /E484/
       echo "No syntax file found for '" . s:langsyntaxfile . "'"
     endtry
@@ -196,7 +196,6 @@ endfunction
 function! DisableEmbedsforCodeblocksWithLang(langname)
     try
       exe 'syn clear pandocDelimitedCodeBlock_'.a:langname
-      exe 'syn clear pandocDelimitedCodeBlockinBlockQuote_'.a:langname
     catch /E28/
       echo "No existing highlight definitions found for '" . a:langname . "'"
     endtry
@@ -297,7 +296,9 @@ syn match pandocTitleBlockTitle /\%^%.*\n/ contained containedin=pandocTitleBloc
 " }}}2
 
 " Blockquotes: {{{2
-syn match pandocBlockQuote /^\s\{,3}>.*\n\(.*\n\@1<!\n\)*/ contains=@Spell,pandocEmphasis,pandocStrong,pandocPCite,pandocSuperscript,pandocSubscript,pandocStrikeout,pandocUListItem,pandocNoFormatted,pandocAmpersandEscape,pandocLaTeXInlineMath,pandocEscapedDollar,pandocLaTeXCommand,pandocLaTeXMathBlock,pandocLaTeXRegion skipnl
+" Lazy (unmarked) continuation lines remain in the quote until a blank line.
+" keepend prevents unfinished inline formatting from swallowing that boundary.
+syn region pandocBlockQuote start=/^\s\{,3}>/ end=/^\s*$/ contains=@Spell,pandocEmphasis,pandocStrong,pandocPCite,pandocSuperscript,pandocSubscript,pandocStrikeout,pandocUListItem,pandocNoFormatted,pandocAmpersandEscape,pandocLaTeXInlineMath,pandocEscapedDollar,pandocLaTeXCommand,pandocLaTeXMathBlock,pandocLaTeXRegion keepend
 syn match pandocBlockQuoteMark /\_^\s\{,3}>/ contained containedin=pandocEmphasis,pandocStrong,pandocPCite,pandocSuperscript,pandocSubscript,pandocStrikeout,pandocUListItem,pandocNoFormatted
 " }}}2
 
@@ -311,7 +312,7 @@ syn region pandocCodeBlockInsideIndent   start=/\(\(\d\|\a\|*\).*\n\)\@<!\(^\(\s
 " Links: {{{2
 
 " Base: {{{3
-syn region pandocReferenceLabel matchgroup=pandocOperator start=/!\{,1}\\\@<!\^\@<!\[/ skip=/\(\\\@<!\]\]\@=\|`[^`]*`\)/ end=/\\\@<!\]/ keepend display
+syn region pandocReferenceLabel matchgroup=pandocOperator start=/!\{,1}\\\@<!\^\@<!\[/ skip=/\(\\\@<!\]\]\@=\|`[^`]*`\)/ end=/\\\@<!\]/ keepend display contains=pandocNoFormatted
 if g:pandoc#syntax#conceal#urls == 1
     syn region pandocReferenceURL matchgroup=pandocOperator start=/\]\@1<=(/ end=/)/ keepend conceal
 else
@@ -401,7 +402,7 @@ call s:WithConceal('strikeout', 'syn region pandocStrikeout matchgroup=pandocOpe
 
 " Headers: {{{2
 syn match pandocAtxHeader /\(\%^\|<.\+>.*\n\|^\s*\n\)\@<=#\{1,6}.*\n/ contains=pandocEmphasis,pandocStrong,pandocNoFormatted,pandocLaTeXInlineMath,pandocEscapedDollar,@Spell,pandocAmpersandEscape,pandocReferenceLabel,pandocReferenceURL display
-syn match pandocAtxHeaderMark /\(^#\{1,6}\|\\\@<!#\+\(\s*.*$\)\@=\)/ contained containedin=pandocAtxHeader
+syn match pandocAtxHeaderMark /\(^#\{1,6}\|\s\zs\\\@<!#\+\s*$\)/ contained containedin=pandocAtxHeader
 call s:WithConceal('atx', 'syn match pandocAtxStart /#/ contained containedin=pandocAtxHeaderMark', 'conceal cchar='.s:cchars['atx'])
 syn match pandocSetexHeader /^.\+\n[=]\+$/ contains=pandocEmphasis,pandocStrong,pandocNoFormatted,pandocLaTeXInlineMath,pandocEscapedDollar,@Spell,pandocAmpersandEscape
 syn match pandocSetexHeader /^.\+\n[-]\+$/ contains=pandocEmphasis,pandocStrong,pandocNoFormatted,pandocLaTeXInlineMath,pandocEscapedDollar,@Spell,pandocAmpersandEscape
@@ -447,11 +448,12 @@ syn match pandocTableHeaderWord /\<.\{-}\>/ contained containedin=pandocGridTabl
 " }}}2
 
 " Delimited Code Blocks: {{{2
-" this is here because we can override strikeouts and subscripts
-syn region pandocDelimitedCodeBlock start=/^\(>\s\)\?\z(\([ ]\+\|\t\)\=\~\{3,}\~*\)/ end=/^\z1\~*/ skipnl contains=pandocDelimitedCodeBlockStart,pandocDelimitedCodeBlockEnd keepend
-syn region pandocDelimitedCodeBlock start=/^\(>\s\)\?\z(\([ ]\+\|\t\)\=`\{3,}`*\)/ end=/^\z1`*/ skipnl contains=pandocDelimitedCodeBlockStart,pandocDelimitedCodeBlockEnd keepend
+" Fenced code takes precedence over strikeouts and subscripts.
+syn region pandocDelimitedCodeBlock start=/^\z(\%(>\s\)\?\)\z(\([ ]\+\|\t\)\=\~\{3,}\~*\)/ end=/^\%(\z1\)\?\z2\~*\s*$/ skipnl contains=pandocDelimitedCodeBlockStart,pandocDelimitedCodeBlockEnd keepend containedin=pandocBlockQuote
+syn region pandocDelimitedCodeBlock start=/^\z(\%(>\s\)\?\)\z(\([ ]\+\|\t\)\=`\{3,}`*\)/ end=/^\%(\z1\)\?\z2`*\s*$/ skipnl contains=pandocDelimitedCodeBlockStart,pandocDelimitedCodeBlockEnd keepend containedin=pandocBlockQuote
 call s:WithConceal('codeblock_start', 'syn match pandocDelimitedCodeBlockStart /\(\(\_^\n\_^\|\%^\)\(>\s\)\?\( \+\|\t\)\=\)\@<=\(\~\{3,}\~*\|`\{3,}`*\)/ contained containedin=pandocDelimitedCodeBlock nextgroup=pandocDelimitedCodeBlockLanguage', 'conceal cchar='.s:cchars['codelang'])
 syn match pandocDelimitedCodeBlockLanguage /\(\s\?\)\@<=.\+\(\_$\)\@=/ contained
+call s:WithConceal('codeblock_start', 'syn match pandocDelimitedCodeBlockStart /\(^>\s\)\@2<=\(`\{3,}`*\|\~\{3,}\~*\)\ze\s*\S/ contained nextgroup=pandocDelimitedCodeBlockLanguage', 'conceal cchar='.s:cchars['codelang'])
 call s:WithConceal('codeblock_delim', 'syn match pandocDelimitedCodeBlockEnd /\(`\{3,}`*\|\~\{3,}\~*\)\(\_$\n\(>\s\)\?\_$\)\@=/ contained containedin=pandocDelimitedCodeBlock', 'conceal cchar='.s:cchars['codeend'])
 syn match pandocBlockQuoteinDelimitedCodeBlock '^>' contained containedin=pandocDelimitedCodeBlock
 syn match pandocCodePre /<pre>.\{-}<\/pre>/ skipnl
@@ -469,6 +471,14 @@ if g:pandoc#syntax#codeblocks#embeds#use != 0
       call EnableEmbedsforCodeblocksWithLang(l)
     endfor
 endif
+" Quote prefixes are cosmetic matches inside nested language regions.
+" Require contiguous quoted lines ending at a fence to limit their scope.
+" Exclude fence lines so they remain available to codeblock regions.
+" The backtracking-engine lookahead stops at the first fence; its cost grows
+" with the number of quoted lines remaining in the block.
+syn match pandocBlockQuoteInEmbeddedCode /\%#=1^>\%([ \t]*\%(`\{3,}\|\~\{3,}\)\)\@!\ze\%([^\n]*\n>\)\{-}[ \t]*\%(`\{3,}\|\~\{3,}\)[ \t]*$/ contained containedin=.*
+
+call s:WithConceal('codeblock_delim', 'syn match pandocDelimitedCodeBlockEnd /\(^>\s\)\@2<=\(`\{3,}`*\|\~\{3,}\~*\)[ \t]*$/ contained containedin=pandocDelimitedCodeBlock', 'conceal cchar='.s:cchars['codeend'])
 " }}}2
 
 " Abbreviations: {{{2
@@ -618,6 +628,7 @@ function! s:SetupPandocHighlights()
   hi def link pandocDelimitedCodeBlockEnd Delimiter
   hi def link pandocDelimitedCodeBlockLanguage Comment
   hi def link pandocBlockQuoteinDelimitedCodeBlock pandocBlockQuote
+  hi def link pandocBlockQuoteInEmbeddedCode pandocBlockQuote
   hi def link pandocCodePre String
 
   hi def link pandocLineBlockDelimiter Delimiter

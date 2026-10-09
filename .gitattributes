@@ -1,0 +1,2 @@
+# The blockquote review fixture intentionally contains spaces-only/tab-only lines.
+tests/blockquote.pdc whitespace=-blank-at-eol
