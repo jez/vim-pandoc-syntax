@@ -117,3 +117,43 @@ issue #31:
 "Foo"
 *"Foo"*
 **"Foo"**
+
+# fenced code inside a blockquote
+
+> This is a quote which has a code block:
+>
+> ```ruby
+> class A
+>   def foo = "Hello, world!"
+> end
+> ```
+>
+> This is **after** the codeblock.
+
+> ~~~~
+> A shorter fence must not close this block:
+> ~~~
+> Still code.
+> ~~~~
+>
+> This is **after** the tilde codeblock.
+
+# lazy closing fence in a quoted Ruby block
+
+> ```ruby
+class A
+end
+```
+**Markdown highlighting resumes inside the quote.**
+
+This paragraph is outside the quote.
+
+# unquoted embedded Ruby control
+
+```ruby
+class A
+  def foo = "ordinary embedded code"
+end
+```
+
+**Markdown highlighting resumes outside the unquoted block.**

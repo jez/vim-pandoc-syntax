@@ -1,0 +1,56 @@
+> A quote can start at the beginning of the file.
+
+# Lazy continuation (unchanged)
+
+> Quoted paragraph.
+This line is still inside the quote.
+
+This paragraph is outside the quote.
+
+# Whitespace-only blank lines
+
+> The quote ends at the following spaces-only line.
+   
+This paragraph must not be blue.
+
+> The quote ends at the following tab-only line.
+	
+This paragraph must not be blue either.
+
+> The quote ends at the following mixed whitespace line.
+ 	 
+This paragraph is also outside the quote.
+
+# Unfinished formatting at a quote boundary
+
+> **Unfinished bold inside the quote.
+
+Outside the quote; unfinished bold must not leak here.
+
+> `Unfinished inline code inside the quote.
+
+Outside the quote; unfinished inline code must not leak here.
+
+# A quote cannot interrupt a paragraph in Pandoc markdown
+
+This paragraph has no blank line before the next line.
+> This is still literal paragraph text, not a quote.
+
+> With a blank line before it, this is a quote.
+
+# Quoted blank lines remain inside the quote
+
+> First paragraph.
+>
+> Second paragraph.
+
+# Nested lazy continuation (unchanged)
+
+> > > A nested quote.
+Lazy continuation stays quoted.
+
+# Indentation controls (unchanged)
+
+   > Three spaces still allow a quote.
+
+    > Four spaces make an indented code block.
