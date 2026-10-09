@@ -470,6 +470,13 @@ if g:pandoc#syntax#codeblocks#embeds#use != 0
       call EnableEmbedsforCodeblocksWithLang(l)
     endfor
 endif
+" Quote prefixes are cosmetic matches inside nested language regions.
+" Require contiguous quoted lines ending at a fence to limit their scope.
+" Exclude fence lines so they remain available to codeblock regions.
+" The backtracking-engine lookahead stops at the first fence; its cost grows
+" with the number of quoted lines remaining in the block.
+syn match pandocBlockQuoteInEmbeddedCode /\%#=1^>\%([ \t]*\%(`\{3,}\|\~\{3,}\)\)\@!\ze\%([^\n]*\n>\)\{-}[ \t]*\%(`\{3,}\|\~\{3,}\)[ \t]*$/ contained containedin=.*
+
 " }}}2
 
 " Abbreviations: {{{2
@@ -619,6 +626,7 @@ function! s:SetupPandocHighlights()
   hi def link pandocDelimitedCodeBlockEnd Delimiter
   hi def link pandocDelimitedCodeBlockLanguage Comment
   hi def link pandocBlockQuoteinDelimitedCodeBlock pandocBlockQuote
+  hi def link pandocBlockQuoteInEmbeddedCode pandocBlockQuote
   hi def link pandocCodePre String
 
   hi def link pandocLineBlockDelimiter Delimiter
