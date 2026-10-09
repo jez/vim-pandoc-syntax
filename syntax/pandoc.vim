@@ -169,16 +169,16 @@ function! EnableEmbedsforCodeblocksWithLang(entry)
         let s:langsyntaxfile = matchstr(a:entry, '[^=]*$')
         unlet! b:current_syntax
         exe 'syn include @'.toupper(s:langname).' syntax/'.s:langsyntaxfile.'.vim'
-        " We might have just turned off spellchecking by including the file,
-        " so we turn it back on here.
+        " Imported syntax can disable spelling; Pandoc enables it at top level.
         exe 'syntax spell toplevel'
-        exe 'syn region pandocDelimitedCodeBlock_' . s:langname . ' start=/\(\_^\( \+\|\t\)\=\(`\{3,}`*\|\~\{3,}\~*\)\s*\%({[^.]*[.=]\)\=' . s:langname . '\>.*\n\)\@<=\_^/' .
-                    \' end=/\_$\n\(\( \+\|\t\)\=\(`\{3,}`*\|\~\{3,}\~*\)\_$\n\_$\)\@=/ contained containedin=pandocDelimitedCodeBlock' .
-                    \' contains=@' . toupper(s:langname)
-        exe 'syn region pandocDelimitedCodeBlockinBlockQuote_' . s:langname . ' start=/>\s\(`\{3,}`*\|\~\{3,}\~*\)\s*\%({[^.]*\.\)\=' . s:langname . '\>/' .
-                    \ ' end=/\(`\{3,}`*\|\~\{3,}\~*\)/ contained containedin=pandocDelimitedCodeBlock' .
-                    \' contains=@' . toupper(s:langname) .
-                    \',pandocDelimitedCodeBlockStart,pandocDelimitedCodeBlockEnd,pandodDelimitedCodeblockLang,pandocBlockQuoteinDelimitedCodeBlock'
+        " Both quoted and unquoted embeds start after the opening line, leaving
+        " delimiters and language labels to the ordinary Pandoc syntax rules.
+        " The outer codeblock's keepend bounds the embed at the matching fence.
+        " Quote prefixes remain in the language syntax input: anchored rules and
+        " multiline strings/comments may misbehave. Prefix coloring is cosmetic.
+        exe 'syn region pandocDelimitedCodeBlock_' . s:langname . ' start=/\%(^\|^>\s\)\@2<=\(\_^\%(>\s\)\?\( \+\|\t\)\=\(`\{3,}`*\|\~\{3,}\~*\)\s*\%({[^.]*[.=]\)\=' . s:langname . '\>.*\n\%(>\s\)\?\)\@<=/' .
+                    \' end=/\%$/ contained containedin=pandocDelimitedCodeBlock' .
+                    \' contains=@' . toupper(s:langname) . ',pandocDelimitedCodeBlockEnd,pandocBlockQuoteinDelimitedCodeBlock'
     catch /E484/
       echo "No syntax file found for '" . s:langsyntaxfile . "'"
     endtry
@@ -196,7 +196,6 @@ endfunction
 function! DisableEmbedsforCodeblocksWithLang(langname)
     try
       exe 'syn clear pandocDelimitedCodeBlock_'.a:langname
-      exe 'syn clear pandocDelimitedCodeBlockinBlockQuote_'.a:langname
     catch /E28/
       echo "No existing highlight definitions found for '" . a:langname . "'"
     endtry
