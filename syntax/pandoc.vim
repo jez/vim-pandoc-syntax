@@ -312,7 +312,7 @@ syn region pandocCodeBlockInsideIndent   start=/\(\(\d\|\a\|*\).*\n\)\@<!\(^\(\s
 " Links: {{{2
 
 " Base: {{{3
-syn region pandocReferenceLabel matchgroup=pandocOperator start=/!\{,1}\\\@<!\^\@<!\[/ skip=/\(\\\@<!\]\]\@=\|`[^`]*`\)/ end=/\\\@<!\]/ keepend display contains=pandocNoFormatted
+syn region pandocReferenceLabel matchgroup=pandocOperator start=/!\{,1}\\\@<!\^\@<!\[/ skip=/\(\\\@<!\]\]\@=\|`[^`]*`\)/ end=/\\\@<!\]/ keepend display contains=@Spell,pandocNoFormatted,pandocEmphasisInLink,pandocStrongInLink,pandocStrongEmphasisInLink
 if g:pandoc#syntax#conceal#urls == 1
     syn region pandocReferenceURL matchgroup=pandocOperator start=/\]\@1<=(/ end=/)/ keepend conceal
 else
@@ -371,6 +371,18 @@ call s:WithConceal('block', 'syn region pandocStrongInEmphasis matchgroup=pandoc
 call s:WithConceal('block', 'syn region pandocEmphasisInStrong matchgroup=pandocOperator start=/\\\@1<!\(\_^\|\s\|[[:punct:]]\)\@<=\*\S\@=/ skip=/\(\*\*\|__\)/ end=/\S\@<=\*\([[:punct:]]\|\s\|\_$\)\@=/ contained containedin=pandocStrong contains=@Spell,pandocAmpersandEscape', 'concealends')
 call s:WithConceal('block', 'syn region pandocEmphasisInStrong matchgroup=pandocOperator start=/\\\@<!\(\_^\|\s\|[[:punct:]]\)\@<=_\S\@=/ skip=/\(\*\*\|__\)/ end=/\S\@<=_\([[:punct:]]\|\s\|\_$\)\@=/ contained containedin=pandocStrong contains=@Spell,pandocAmpersandEscape', 'concealends')
 " }}}3
+
+" Formatting inside link text uses separate groups so themes can preserve link colors.
+call s:WithConceal('block', 'syn region pandocEmphasisInLink matchgroup=pandocOperator start=/\\\@1<!\(\_^\|\s\|[[:punct:]]\)\@<=\*\S\@=/ skip=/\(\*\*\|__\)/ end=/\*\([[:punct:]]\|\a\|\s\|\_$\)\@=/ contains=@Spell,pandocNoFormattedInEmphasis,pandocLatexInlineMath,pandocAmpersandEscape contained', 'concealends')
+call s:WithConceal('block', 'syn region pandocEmphasisInLink matchgroup=pandocOperator start=/\\\@1<!\(\_^\|\s\|[[:punct:]]\)\@<=_\S\@=/ skip=/\(\*\*\|__\)/ end=/\S\@1<=_\([[:punct:]]\|\a\|\s\|\_$\)\@=/ contains=@Spell,pandocNoFormattedInEmphasis,pandocLatexInlineMath,pandocAmpersandEscape contained', 'concealends')
+call s:WithConceal('block', 'syn region pandocStrongInLink matchgroup=pandocOperator start=/\(\\\@<!\*\)\{2}/ end=/\(\\\@<!\*\)\{2}/ contains=@Spell,pandocNoFormattedInStrong,pandocLatexInlineMath,pandocAmpersandEscape contained', 'concealends')
+call s:WithConceal('block', 'syn region pandocStrongInLink matchgroup=pandocOperator start=/__/ end=/__/ contains=@Spell,pandocNoFormattedInStrong,pandocLatexInlineMath,pandocAmpersandEscape contained', 'concealends')
+call s:WithConceal('block', 'syn region pandocStrongEmphasisInLink matchgroup=pandocOperator start=/\*\{3}\(\S[^*]*\(\*\S\|\n[^*]*\*\S\)\)\@=/ end=/\S\@<=\*\{3}/ contains=@Spell,pandocAmpersandEscape contained', 'concealends')
+call s:WithConceal('block', 'syn region pandocStrongEmphasisInLink matchgroup=pandocOperator start=/\(___\)\S\@=/ end=/\S\@<=___/ contains=@Spell,pandocAmpersandEscape contained', 'concealends')
+call s:WithConceal('block', 'syn region pandocStrongInEmphasisInLink matchgroup=pandocOperator start=/\*\*/ end=/\*\*/ contained containedin=pandocEmphasisInLink contains=@Spell,pandocAmpersandEscape', 'concealends')
+call s:WithConceal('block', 'syn region pandocStrongInEmphasisInLink matchgroup=pandocOperator start=/__/ end=/__/ contained containedin=pandocEmphasisInLink contains=@Spell,pandocAmpersandEscape', 'concealends')
+call s:WithConceal('block', 'syn region pandocEmphasisInStrongInLink matchgroup=pandocOperator start=/\\\@1<!\(\_^\|\s\|[[:punct:]]\)\@<=\*\S\@=/ skip=/\(\*\*\|__\)/ end=/\S\@<=\*\([[:punct:]]\|\s\|\_$\)\@=/ contained containedin=pandocStrongInLink contains=@Spell,pandocAmpersandEscape', 'concealends')
+call s:WithConceal('block', 'syn region pandocEmphasisInStrongInLink matchgroup=pandocOperator start=/\\\@<!\(\_^\|\s\|[[:punct:]]\)\@<=_\S\@=/ skip=/\(\*\*\|__\)/ end=/\S\@<=_\([[:punct:]]\|\s\|\_$\)\@=/ contained containedin=pandocStrongInLink contains=@Spell,pandocAmpersandEscape', 'concealends')
 
 " Inline Code: {{{3
 " Using single back ticks
@@ -638,6 +650,11 @@ function! s:SetupPandocHighlights()
   hi def link pandocListItemBulletId Identifier
 
   hi def link pandocReferenceLabel Label
+  hi def link pandocStrongEmphasisInLink pandocStrongEmphasis
+  hi def link pandocStrongInEmphasisInLink pandocStrongInEmphasis
+  hi def link pandocEmphasisInStrongInLink pandocEmphasisInStrong
+  hi def link pandocEmphasisInLink pandocEmphasis
+  hi def link pandocStrongInLink pandocStrong
   hi def link pandocReferenceURL Underlined
   hi def link pandocLinkTip Identifier
   hi def link pandocImageIcon Operator
